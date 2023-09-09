@@ -35,6 +35,10 @@ def call(Map pipelineParams) {
         defaultImageBuilder << imageBuilder
     }
 
+    if (pipelineParams.imageBuilders.size() == 0) {
+        error("imageBuilders is required")
+    }
+
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
     tag = new Date().format("yyyyMMdd", TimeZone.getTimeZone('UTC'))

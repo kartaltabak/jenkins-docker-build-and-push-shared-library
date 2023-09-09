@@ -7,9 +7,9 @@ def call(Map pipelineParams) {
             baseImage            : null,
             registryServer       : 'https://registry-1.docker.io',
             registryCredentialsId: 'Dockerhub-kartaltabak',
-            registryRepoName     : 'kartaltabak/jenkins-with-docker',
+            registryRepoName     : null,
             dockerContextFolder  : 'docker',
-            imageTestCommand     : 'docker --version'
+            imageTestCommand     : null
     ]
     if (pipelineParams == null){
         pipelineParams = defaultParams
@@ -22,9 +22,6 @@ def call(Map pipelineParams) {
     }
     if (pipelineParams.registryRepoName == null){
         error("registryRepoName is required")
-    }
-    if (pipelineParams.imageTestCommand == null){
-        error("imageTestCommand is required")
     }
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
@@ -46,7 +43,9 @@ def call(Map pipelineParams) {
                             def taggedName = repoName + ":" + tag
                             def image = docker.build(taggedName, pipelineParams.dockerContextFolder)
 
-                            sh "docker run --rm ${taggedName} ${pipelineParams.imageTestCommand}"
+                            if (pipelineParams.imageTestCommand != null){
+                                sh "docker run --rm ${taggedName} ${pipelineParams.imageTestCommand}"
+                            }
 
                             image.push()
 

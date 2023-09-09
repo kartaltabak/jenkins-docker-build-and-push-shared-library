@@ -44,9 +44,9 @@ def call(Map pipelineParams) {
                         docker.withRegistry(pipelineParams.registryServer, pipelineParams.registryCredentialsId) {
                             def repoName = pipelineParams.registryRepoName
                             def taggedName = repoName + ":" + tag
-                            def image = docker.build(taggedName, dockerContextFolder)
+                            def image = docker.build(taggedName, pipelineParams.dockerContextFolder)
 
-                            sh "docker run --rm ${taggedName} ${imageTestCommand}"
+                            sh "docker run --rm ${taggedName} ${pipelineParams.imageTestCommand}"
 
                             image.push()
 

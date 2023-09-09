@@ -1,22 +1,31 @@
 #!/usr/bin/env groovy
 
 def call(Map pipelineParams) {
-    def defaultParams = [
+    Map defaultParams = [
             mainBranch           : 'main',
-            mainBranchCron       : '@',
-            baseImage            : 'jenkins/jenkins:jdk11',
+            mainBranchCron       : '@monthly',
+            baseImage            : null,
             registryServer       : 'https://registry-1.docker.io',
             registryCredentialsId: 'Dockerhub-kartaltabak',
             registryRepoName     : 'kartaltabak/jenkins-with-docker',
             dockerContextFolder  : 'docker',
             imageTestCommand     : 'docker --version'
     ]
-    mainBranchCron: '@weekly',
-    baseImage: 'jenkins/jenkins:jdk11',
-    registryRepoName: 'kartaltabak/jenkins-with-docker',
-    imageTestCommand: 'docker --version'
-    pipelineParams = defaultParams << pipelineParams
+    if (pipelineParams == null){
+        pipelineParams = defaultParams
+    } else {
+        pipelineParams = defaultParams << pipelineParams
+    }
 
+    if (pipelineParams.baseImage == null){
+        error("baseImage is required")
+    }
+    if (pipelineParams.registryRepoName == null){
+        error("registryRepoName is required")
+    }
+    if (pipelineParams.imageTestCommand == null){
+        error("imageTestCommand is required")
+    }
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
     tag = new Date().format("yyyyMMdd", TimeZone.getTimeZone('UTC'))

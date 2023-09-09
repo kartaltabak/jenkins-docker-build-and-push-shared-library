@@ -9,19 +9,26 @@ def call(Map pipelineParams) {
             registryCredentialsId: 'Dockerhub-kartaltabak',
             registryRepoName     : null,
             dockerContextFolder  : 'docker',
-            imageTestCommand     : null
+            imageTestCommand     : null,
+            imageTestCommands    : null
     ]
-    if (pipelineParams == null){
+    if (pipelineParams == null) {
         pipelineParams = defaultParams
     } else {
         pipelineParams = defaultParams << pipelineParams
     }
 
-    if (pipelineParams.baseImage == null){
+    if (pipelineParams.baseImage == null) {
         error("baseImage is required")
     }
-    if (pipelineParams.registryRepoName == null){
+    if (pipelineParams.registryRepoName == null) {
         error("registryRepoName is required")
+    }
+    if (pipelineParams.imageTestCommands == null) {
+        pipelineParams.imageTestCommands = []
+    }
+    if (pipelineParams.imageTestCommand != null) {
+        pipelineParams.imageTestCommands.add(0, imageTestCommand)
     }
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
@@ -43,8 +50,8 @@ def call(Map pipelineParams) {
                             def taggedName = repoName + ":" + tag
                             def image = docker.build(taggedName, pipelineParams.dockerContextFolder)
 
-                            if (pipelineParams.imageTestCommand != null){
-                                sh "docker run --rm ${taggedName} ${pipelineParams.imageTestCommand}"
+                            for(testCommand in pipelineParams.imageTestCommands){
+                                sh "docker run --rm ${taggedName} $testCommand}"
                             }
 
                             image.push()

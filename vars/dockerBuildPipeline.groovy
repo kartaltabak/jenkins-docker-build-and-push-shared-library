@@ -1,7 +1,17 @@
 #!/usr/bin/env groovy
 
 def call(Map pipelineParams) {
-    String cron_string = BRANCH_NAME == "main" ? "@weekly" : ""
+    Map<String, String> defaultParams = [mainBranch           : 'main',
+                                         mainBranchCron       : '@weekly',
+                                         baseImage            : 'jenkins/jenkins:jdk11',
+                                         registryServer       : 'https://registry-1.docker.io',
+                                         registryCredentialsId: 'Dockerhub-kartaltabak',
+                                         registryRepoName     : 'kartaltabak/jenkins-with-docker',
+                                         dockerContextFolder  : 'docker',
+                                         imageTestCommand     : 'docker --version']
+    pipelineParams = defaultParams << pipelineParams
+
+    String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
     tag = new Date().format("yyyyMMdd", TimeZone.getTimeZone('UTC'))
 
@@ -15,13 +25,13 @@ def call(Map pipelineParams) {
             stage('Build & Push') {
                 steps {
                     script {
-                        sh 'docker pull jenkins/jenkins:jdk11'
-                        docker.withRegistry('https://registry-1.docker.io', 'Dockerhub-kartaltabak') {
-                            def repoName = "kartaltabak/jenkins-with-docker"
+                        sh "docker pull ${pipelineParams.baseImage}"
+                        docker.withRegistry(pipelineParams.registryServer, pipelineParams.registryCredentialsId) {
+                            def repoName = registryRepoName
                             def taggedName = repoName + ":" + tag
-                            def image = docker.build(taggedName, "docker")
+                            def image = docker.build(taggedName, dockerContextFolder)
 
-                            sh "docker run --rm ${taggedName} docker --version"
+                            sh "docker run --rm ${taggedName} ${imageTestCommand}"
 
                             image.push()
 

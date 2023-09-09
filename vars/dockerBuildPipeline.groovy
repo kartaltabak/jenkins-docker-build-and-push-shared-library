@@ -28,7 +28,9 @@ def call(Map pipelineParams) {
                 registryRepoName     : null,
                 dockerContextFolder  : 'docker',
                 imageTestCommand     : null,
-                imageTestCommands    : null
+                imageTestCommands    : null,
+                timestampTag         : null,
+                latestTag            : 'latest'
         ]
         defaultImageBuilder << imageBuilder
     }
@@ -64,7 +66,12 @@ def call(Map pipelineParams) {
                             sh "docker pull ${imageBuilder.baseImage}"
                             docker.withRegistry(imageBuilder.registryServer, imageBuilder.registryCredentialsId) {
                                 def repoName = imageBuilder.registryRepoName
-                                def taggedName = repoName + ":" + tag
+                                def taggedName
+                                if (imageBuilder.timestampTag != null) {
+                                    taggedName = repoName + ":" + imageBuilder.timestampTag + "-" + tag
+                                } else {
+                                    taggedName = repoName + ":" + tag
+                                }
                                 def image = docker.build(taggedName, imageBuilder.dockerContextFolder)
 
                                 for (testCommand in imageBuilder.imageTestCommands) {
@@ -73,7 +80,7 @@ def call(Map pipelineParams) {
 
                                 image.push()
 
-                                def latestName = repoName + ":latest"
+                                def latestName = repoName + ":" + imageBuilder.latestTag
                                 sh "docker tag " + taggedName + " " + latestName
                                 docker.image(latestName).push()
                             }

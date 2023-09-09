@@ -2,15 +2,10 @@
 
 def call(Map pipelineParams) {
     Map defaultParams = [
-            mainBranch           : 'main',
-            mainBranchCron       : '@monthly',
-            baseImage            : null,
-            registryServer       : 'https://registry-1.docker.io',
-            registryCredentialsId: 'Dockerhub-kartaltabak',
-            registryRepoName     : null,
-            dockerContextFolder  : 'docker',
-            imageTestCommand     : null,
-            imageTestCommands    : null
+            mainBranch    : 'main',
+            mainBranchCron: '@monthly',
+            imageBuilder  : null,
+            imageBuilders : null
     ]
     if (pipelineParams == null) {
         pipelineParams = defaultParams
@@ -18,18 +13,26 @@ def call(Map pipelineParams) {
         pipelineParams = defaultParams << pipelineParams
     }
 
-    if (pipelineParams.baseImage == null) {
-        error("baseImage is required")
+    if (pipelineParams.imageBuilders == null) {
+        pipelineParams.imageBuilders = []
     }
-    if (pipelineParams.registryRepoName == null) {
-        error("registryRepoName is required")
+    if (pipelineParams.imageBuilder != null) {
+        pipelineParams.imageBuilders.add(0, pipelineParams.imageBuilder)
     }
-    if (pipelineParams.imageTestCommands == null) {
-        pipelineParams.imageTestCommands = []
+
+    pipelineParams.imageBuilders = pipelineParams.imageBuilders.collect { imageBuilder ->
+        defaultImageBuilder = [
+                baseImage            : null,
+                registryServer       : 'https://registry-1.docker.io',
+                registryCredentialsId: 'Dockerhub-kartaltabak',
+                registryRepoName     : null,
+                dockerContextFolder  : 'docker',
+                imageTestCommand     : null,
+                imageTestCommands    : null
+        ]
+        defaultImageBuilder << imageBuilder
     }
-    if (pipelineParams.imageTestCommand != null) {
-        pipelineParams.imageTestCommands.add(0, imageTestCommand)
-    }
+
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
 
     tag = new Date().format("yyyyMMdd", TimeZone.getTimeZone('UTC'))
@@ -44,21 +47,36 @@ def call(Map pipelineParams) {
             stage('Build & Push') {
                 steps {
                     script {
-                        sh "docker pull ${pipelineParams.baseImage}"
-                        docker.withRegistry(pipelineParams.registryServer, pipelineParams.registryCredentialsId) {
-                            def repoName = pipelineParams.registryRepoName
-                            def taggedName = repoName + ":" + tag
-                            def image = docker.build(taggedName, pipelineParams.dockerContextFolder)
-
-                            for(testCommand in pipelineParams.imageTestCommands){
-                                sh "docker run --rm ${taggedName} ${testCommand}"
+                        for (imageBuilder in pipelineParams.imageBuilders) {
+                            if (imageBuilder.baseImage == null) {
+                                error("baseImage is required")
+                            }
+                            if (imageBuilder.registryRepoName == null) {
+                                error("registryRepoName is required")
+                            }
+                            if (imageBuilder.imageTestCommands == null) {
+                                imageBuilder.imageTestCommands = []
+                            }
+                            if (imageBuilder.imageTestCommand != null) {
+                                imageBuilder.imageTestCommands.add(0, imageBuilder.imageTestCommand)
                             }
 
-                            image.push()
+                            sh "docker pull ${imageBuilder.baseImage}"
+                            docker.withRegistry(imageBuilder.registryServer, imageBuilder.registryCredentialsId) {
+                                def repoName = imageBuilder.registryRepoName
+                                def taggedName = repoName + ":" + tag
+                                def image = docker.build(taggedName, imageBuilder.dockerContextFolder)
 
-                            def latestName = repoName + ":latest"
-                            sh "docker tag " + taggedName + " " + latestName
-                            docker.image(latestName).push()
+                                for (testCommand in imageBuilder.imageTestCommands) {
+                                    sh "docker run --rm ${taggedName} ${testCommand}"
+                                }
+
+                                image.push()
+
+                                def latestName = repoName + ":latest"
+                                sh "docker tag " + taggedName + " " + latestName
+                                docker.image(latestName).push()
+                            }
                         }
                     }
                 }

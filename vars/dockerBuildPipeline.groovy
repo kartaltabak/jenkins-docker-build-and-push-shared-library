@@ -51,7 +51,7 @@ def call(Map pipelineParams) {
                             def image = docker.build(taggedName, pipelineParams.dockerContextFolder)
 
                             for(testCommand in pipelineParams.imageTestCommands){
-                                sh "docker run --rm ${taggedName} $testCommand}"
+                                sh "docker run --rm ${taggedName} ${testCommand}"
                             }
 
                             image.push()

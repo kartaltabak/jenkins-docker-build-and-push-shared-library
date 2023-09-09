@@ -1,14 +1,14 @@
 #!/usr/bin/env groovy
 
 def call(Map pipelineParams) {
-    Map<String, String> defaultParams = [mainBranch           : 'main',
-                                         mainBranchCron       : '@weekly',
-                                         baseImage            : 'jenkins/jenkins:jdk11',
-                                         registryServer       : 'https://registry-1.docker.io',
-                                         registryCredentialsId: 'Dockerhub-kartaltabak',
-                                         registryRepoName     : 'kartaltabak/jenkins-with-docker',
-                                         dockerContextFolder  : 'docker',
-                                         imageTestCommand     : 'docker --version']
+    def defaultParams = [mainBranch           : 'main',
+                         mainBranchCron       : '@weekly',
+                         baseImage            : 'jenkins/jenkins:jdk11',
+                         registryServer       : 'https://registry-1.docker.io',
+                         registryCredentialsId: 'Dockerhub-kartaltabak',
+                         registryRepoName     : 'kartaltabak/jenkins-with-docker',
+                         dockerContextFolder  : 'docker',
+                         imageTestCommand     : 'docker --version']
     pipelineParams = defaultParams << pipelineParams
 
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""

@@ -1,14 +1,20 @@
 #!/usr/bin/env groovy
 
 def call(Map pipelineParams) {
-    def defaultParams = [mainBranch           : 'main',
-                         mainBranchCron       : '@weekly',
-                         baseImage            : 'jenkins/jenkins:jdk11',
-                         registryServer       : 'https://registry-1.docker.io',
-                         registryCredentialsId: 'Dockerhub-kartaltabak',
-                         registryRepoName     : 'kartaltabak/jenkins-with-docker',
-                         dockerContextFolder  : 'docker',
-                         imageTestCommand     : 'docker --version']
+    def defaultParams = [
+            mainBranch           : 'main',
+            mainBranchCron       : '@',
+            baseImage            : 'jenkins/jenkins:jdk11',
+            registryServer       : 'https://registry-1.docker.io',
+            registryCredentialsId: 'Dockerhub-kartaltabak',
+            registryRepoName     : 'kartaltabak/jenkins-with-docker',
+            dockerContextFolder  : 'docker',
+            imageTestCommand     : 'docker --version'
+    ]
+    mainBranchCron: '@weekly',
+    baseImage: 'jenkins/jenkins:jdk11',
+    registryRepoName: 'kartaltabak/jenkins-with-docker',
+    imageTestCommand: 'docker --version'
     pipelineParams = defaultParams << pipelineParams
 
     String cron_string = BRANCH_NAME == pipelineParams.mainBranch ? pipelineParams.mainBranchCron : ""
@@ -27,7 +33,7 @@ def call(Map pipelineParams) {
                     script {
                         sh "docker pull ${pipelineParams.baseImage}"
                         docker.withRegistry(pipelineParams.registryServer, pipelineParams.registryCredentialsId) {
-                            def repoName = registryRepoName
+                            def repoName = pipelineParams.registryRepoName
                             def taggedName = repoName + ":" + tag
                             def image = docker.build(taggedName, dockerContextFolder)
 

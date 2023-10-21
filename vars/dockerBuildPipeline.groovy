@@ -76,6 +76,8 @@ def call(Map pipelineParams) {
                                 } else {
                                     taggedName = repoName + ":" + tag
                                 }
+                                sh "pwd"
+                                sh "ls -alF"
                                 def image = docker.build(taggedName, imageBuilder.dockerContextFolder)
 
                                 for (testCommand in imageBuilder.imageTestCommands) {

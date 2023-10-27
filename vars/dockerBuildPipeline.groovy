@@ -78,7 +78,7 @@ def call(Map pipelineParams) {
                                 }
                                 sh "pwd"
                                 sh "ls -alF"
-                                def image = docker.build(taggedName, imageBuilder.dockerContextFolder)
+                                def image = docker.build(taggedName, "--no-cache ${imageBuilder.dockerContextFolder}")
 
                                 for (testCommand in imageBuilder.imageTestCommands) {
                                     sh "docker run --rm ${taggedName} ${testCommand}"

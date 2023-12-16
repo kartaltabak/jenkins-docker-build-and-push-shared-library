@@ -88,7 +88,7 @@ def call(Map pipelineParams) {
                                 if (imageBuilder.tagCommand != null) {
                                     def customTag = sh(
                                             returnStdout: true,
-                                            script: "docker run -it --rm --entrypoint bash ${taggedName} ${imageBuilder.tagCommand}"
+                                            script: "docker run --rm --entrypoint bash ${taggedName} ${imageBuilder.tagCommand}"
                                     )
                                     def customName = repoName + ":" + customTag
                                     sh "docker tag ${taggedName} ${customName}"

@@ -30,6 +30,7 @@ def call(Map pipelineParams) {
                 imageTestCommand     : null,
                 imageTestCommands    : null,
                 timestampTag         : null,
+                tagCommand           : null,
                 latestTag            : 'latest'
         ]
         defaultImageBuilder << imageBuilder
@@ -76,8 +77,6 @@ def call(Map pipelineParams) {
                                 } else {
                                     taggedName = repoName + ":" + tag
                                 }
-                                sh "pwd"
-                                sh "ls -alF"
                                 def image = docker.build(taggedName, "--no-cache ${imageBuilder.dockerContextFolder}")
 
                                 for (testCommand in imageBuilder.imageTestCommands) {
@@ -86,8 +85,18 @@ def call(Map pipelineParams) {
 
                                 image.push()
 
+                                if (imageBuilder.tagCommand != null) {
+                                    def customTag = sh(
+                                            returnStdout: true,
+                                            script: "docker run -it --rm --entrypoint bash ${taggedName} ${imageBuilder.tagCommand}"
+                                    )
+                                    def customName = repoName + ":" + customTag
+                                    sh "docker tag ${taggedName} ${customName}"
+                                    docker.image(customName).push()
+                                }
+
                                 def latestName = repoName + ":" + imageBuilder.latestTag
-                                sh "docker tag " + taggedName + " " + latestName
+                                sh "docker tag ${taggedName} ${latestName}"
                                 docker.image(latestName).push()
                             }
                         }

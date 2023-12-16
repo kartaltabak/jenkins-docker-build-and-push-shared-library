@@ -93,7 +93,8 @@ def call(Map pipelineParams) {
                                     def customName = repoName + ":" + customTag
                                     sh "docker rmi ${customName}"
                                     sh "docker tag ${taggedName} ${customName}"
-//                                    docker.image(customName).push()
+                                    echo "Pushing ${customName}"
+                                    docker.image(customName).push()
                                 }
 
                                 def latestName = repoName + ":" + imageBuilder.latestTag

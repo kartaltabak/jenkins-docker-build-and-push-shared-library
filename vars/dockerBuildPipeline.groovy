@@ -90,9 +90,9 @@ def call(Map pipelineParams) {
                                             returnStdout: true,
                                             script: "docker run --rm --entrypoint bash ${taggedName} ${imageBuilder.tagCommand}"
                                     )
-                                    def customName = repoName + ":" + customTag
+                                    def customName = (repoName + ":" + customTag).trim()
                                     sh "docker tag ${taggedName} ${customName}"
-                                    echo "Pushing ${customName}"
+                                    echo "Pushing \"${customName}\""
                                     docker.image(customName).push()
                                 }
 

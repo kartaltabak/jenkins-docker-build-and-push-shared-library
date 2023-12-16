@@ -83,14 +83,14 @@ def call(Map pipelineParams) {
                                     sh "docker run --rm ${taggedName} ${testCommand}"
                                 }
 
-//                                image.push()
+                                image.push()
 
                                 if (imageBuilder.tagCommand != null) {
                                     def customTag = sh(
                                             returnStdout: true,
                                             script: "docker run --rm --entrypoint bash ${taggedName} ${imageBuilder.tagCommand}"
-                                    )
-                                    def customName = (repoName + ":" + customTag).trim()
+                                    ).trim()
+                                    def customName = (repoName + ":" + customTag)
                                     sh "docker tag ${taggedName} ${customName}"
                                     echo "Pushing \"${customName}\""
                                     docker.image(customName).push()
@@ -98,7 +98,7 @@ def call(Map pipelineParams) {
 
                                 def latestName = repoName + ":" + imageBuilder.latestTag
                                 sh "docker tag ${taggedName} ${latestName}"
-//                                docker.image(latestName).push()
+                                docker.image(latestName).push()
                             }
                         }
                     }

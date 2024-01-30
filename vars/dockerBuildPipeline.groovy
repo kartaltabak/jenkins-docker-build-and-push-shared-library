@@ -55,9 +55,6 @@ def call(Map pipelineParams) {
                 steps {
                     script {
                         for (imageBuilder in pipelineParams.imageBuilders) {
-                            if (imageBuilder.baseImage == null) {
-                                error("baseImage is required")
-                            }
                             if (imageBuilder.registryRepoName == null) {
                                 error("registryRepoName is required")
                             }
@@ -68,7 +65,9 @@ def call(Map pipelineParams) {
                                 imageBuilder.imageTestCommands.add(0, imageBuilder.imageTestCommand)
                             }
 
-                            sh "docker pull ${imageBuilder.baseImage}"
+                            if (imageBuilder.baseImage != null) {
+                                sh "docker pull ${imageBuilder.baseImage}"
+                            }
                             docker.withRegistry(imageBuilder.registryServer, imageBuilder.registryCredentialsId) {
                                 def repoName = imageBuilder.registryRepoName
                                 def taggedName
